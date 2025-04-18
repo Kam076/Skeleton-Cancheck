@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+""
+
+@author: Kameren Kelly, Yahya Hamu
+"""
+#Data Found:https://world.openfoodfacts.org/data 
+#Carinogens: https://monographs.iarc.who.int/list-of-classifications
+
+
+
+import pandas as pd
+
+# Step 1: Create sample data
+data = [
+    {'Date': '2025-04-18', 'Meal': 'Breakfast', 'Food Item': 'Bacon and Eggs', 'Ingredients': 'bacon, eggs, salt, pepper'},
+    {'Date': '2025-04-18', 'Meal': 'Lunch', 'Food Item': 'Ham Sandwich', 'Ingredients': 'white bread, ham, lettuce, mayo'},
+    {'Date': '2025-04-18', 'Meal': 'Dinner', 'Food Item': 'Grilled Chicken with Vegetables', 'Ingredients': 'chicken, olive oil, carrots, broccoli, seasoning'}
+]
+
+carcinogen_data = [
+    {'Ingredient': 'bacon'},
+    {'Ingredient': 'ham'},
+    {'Ingredient': 'white bread'}
+]
+
+# Step 2: Save food log and carcinogen list to CSVs
+food_log_df = pd.DataFrame(data)
+carcinogens_df = pd.DataFrame(carcinogen_data)
+
+food_log_df.to_csv('food_log.csv', index=False)
+carcinogens_df.to_csv('carcinogens.csv', index=False)
+
+# Step 3: Load the CSVs
+food_log = pd.read_csv("food_log.csv")
+carcinogens = pd.read_csv("carcinogens.csv")
+
+# Step 4: Define analysis function
+def check_carcinogens(ingredients, carcinogen_list):
+    found = []
+    for c in carcinogen_list:
+        if c.lower() in ingredients.lower():
+            found.append(c)
+    return ", ".join(found) if found else None
+
+# Step 5: Analyze food log
+food_log['Carcinogens Found'] = food_log['Ingredients'].apply(
+    lambda x: check_carcinogens(x, carcinogens['Ingredient'].tolist())
+)
+
+# Step 6: Save result with outputs
+food_log.to_csv("food_log_with_analysis.csv", index=False)
+
+# Optional: View flagged entries and counts
+flagged = food_log[food_log['Carcinogens Found'].notna()]
+print(flagged[['Date', 'Meal', 'Food Item', 'Carcinogens Found']])
+
+carcinogen_counts = flagged['Carcinogens Found'].str.split(', ').explode().value_counts()
+print(carcinogen_counts)
